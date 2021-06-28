@@ -1,0 +1,13 @@
+title: Unifi WLAN Radio
+agents: unifi_controller
+catalog: networking
+licence: MIT
+description:
+ plz fill me
+
+item:
+ The name of the Radio
+
+inventory:
+ One Service for each Radio
+ 

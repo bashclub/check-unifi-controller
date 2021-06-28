@@ -1,0 +1,13 @@
+title: Unifi Site
+agents: unifi_controller
+catalog: networking
+licence: MIT
+description:
+ plz fill me
+
+item:
+ The name of the Site
+
+inventory:
+ One Service for each Site
+ 

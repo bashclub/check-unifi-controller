@@ -1,0 +1,13 @@
+title: Unifi Devicelist
+catalog: networking
+agents: unifi_controller
+licence: MIT
+description:
+ plz fill me
+
+item:
+ The name of the device
+
+inventory:
+ One Service for each device
+ 

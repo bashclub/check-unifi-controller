@@ -1,0 +1,13 @@
+title: Unifi Controller
+agents: unifi_controller
+catalog: networking
+licence: MIT
+description:
+ plz fill me
+
+item:
+ The name of the device
+
+inventory:
+ One Service for each device
+ 

@@ -1,0 +1,13 @@
+title: Unifi Network Port
+agents: unifi_controller
+catalog: networking
+licence: MIT
+description:
+ plz fill me
+
+item:
+ The name of the Port
+
+inventory:
+ One Service for each Port
+ 

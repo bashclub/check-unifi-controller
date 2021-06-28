@@ -1,0 +1,13 @@
+title: Unifi SSID
+agents: unifi_controller
+catalog: networking
+licence: MIT
+description:
+ plz fill me
+
+item:
+ The name of the SSID
+
+inventory:
+ One Service for each SSID
+ 

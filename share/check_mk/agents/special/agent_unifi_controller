@@ -1,8 +1,29 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
+##  MIT License
+##  
+##  Copyright (c) 2021 Bash Club
+##  
+##  Permission is hereby granted, free of charge, to any person obtaining a copy
+##  of this software and associated documentation files (the "Software"), to deal
+##  in the Software without restriction, including without limitation the rights
+##  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+##  copies of the Software, and to permit persons to whom the Software is
+##  furnished to do so, subject to the following conditions:
+##  
+##  The above copyright notice and this permission notice shall be included in all
+##  copies or substantial portions of the Software.
+##  
+##  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+##  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+##  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+##  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+##  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+##  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+##  SOFTWARE.
 
 ### 
-__VERSION__ = 0.75
+__VERSION__ = 0.79
 
 import sys
 import socket
@@ -14,7 +35,127 @@ from statistics import mean
 from collections import defaultdict
 
 from pprint import pprint
+try:
+    import cmk.utils.paths
+    AGENT_TMP_PATH = cmk.utils.paths.Path(cmk.utils.paths.tmp_dir, "agents/agent_unifi")
+except ImportError:
+    AGENT_TMP_PATH = None
 
+UNIFI_DEVICE_TABLE = {
+    'BZ2'       : 'UAP',
+    'BZ2LR'     : 'UAP-LR',
+    'U2HSR'     : 'UAP-Outdoor+',
+    'U2IW'      : 'UAP-IW',
+    'U2L48'     : 'UAP-AC-LR',
+    'U2Lv2'     : 'UAP-AC-LR',
+    'U2M'       : 'UAP-Mini',
+    'U2O'       : 'UAP-Outdoor',
+    'U2S48'     : 'UAP-AC',
+    'U2Sv2'     : 'UAP-AC',
+    'U5O'       : 'UAP-Outdoor5',
+    'U7E'       : 'UAP-AC',
+    'U7EDU'     : 'UAP-AC-EDU',
+    'U7Ev2'     : 'UAP-AC',
+    'U7HD'      : 'UAP-AC-HD',
+    'U7SHD'     : 'UAP-AC-SHD',
+    'U7NHD'     : 'UAP-nanoHD',
+    'UFLHD'     : 'UAP-FlexHD',
+    'UHDIW'     : 'UAP-IW-HD',
+    'UAIW6'     : 'U6-IW',
+    'UAE6'      : 'U6-Extender',
+    'UAL6'      : 'U6-Lite',
+    'UAM6'      : 'U6-Mesh',
+    'UALR6'     : 'U6-LR-EA',
+    'UAP6'      : 'U6-LR',
+    'UALR6v2'   : 'U6-LR',
+    'UALR6v3'   : 'U6-LR',
+    'UCXG'      : 'UAP-XG',
+    'UXSDM'     : 'UWB-XG',
+    'UXBSDM'    : 'UWB-XG-BK',
+    'UCMSH'     : 'UAP-XG-Mesh',
+    'U7IW'      : 'UAP-AC-IW',
+    'U7IWP'     : 'UAP-AC-IW-Pro',
+    'U7MP'      : 'UAP-AC-M-Pro',
+    'U7LR'      : 'UAP-AC-LR',
+    'U7LT'      : 'UAP-AC-Lite',
+    'U7O'       : 'UAP-AC-Outdoor',
+    'U7P'       : 'UAP-Pro',
+    'U7MSH'     : 'UAP-AC-M',
+    'U7PG2'     : 'UAP-AC-Pro',
+    'p2N'       : 'PICOM2HP',
+    'UDMB'      : 'UAP-BeaconHD',
+    'USF5P'     : 'USW-Flex',
+    'US8'       : 'US-8',
+    'US8P60'    : 'US-8-60W',
+    'US8P150'   : 'US-8-150W',
+    'S28150'    : 'US-8-150W',
+    'USC8'      : 'US-8',
+    'USC8P60'   : 'US-8-60W',
+    'USC8P150'  : 'US-8-150W',
+    'US16P150'  : 'US-16-150W',
+    'S216150'   : 'US-16-150W',
+    'US24'      : 'US-24-G1',
+    'US24PRO'   : 'USW-Pro-24-PoE',
+    'US24PRO2'  : 'USW-Pro-24',
+    'US24P250'  : 'US-24-250W',
+    'US24PL2'   : 'US-L2-24-PoE',
+    'US24P500'  : 'US-24-500W',
+    'S224250'   : 'US-24-250W',
+    'S224500'   : 'US-24-500W',
+    'US48'      : 'US-48-G1',
+    'US48PRO'   : 'USW-Pro-48-PoE',
+    'US48PRO2'  : 'USW-Pro-48',
+    'US48P500'  : 'US-48-500W',
+    'US48PL2'   : 'US-L2-48-PoE',
+    'US48P750'  : 'US-48-750W',
+    'S248500'   : 'US-48-500W',
+    'S248750'   : 'US-48-750W',
+    'US6XG150'  : 'US-XG-6PoE',
+    'USMINI'    : 'USW-Flex-Mini',
+    'USXG'      : 'US-16-XG',
+    'USC8P450'  : 'USW-Industrial',
+    'UDC48X6'   : 'USW-Leaf',
+    'USL8A'     : 'UniFi Switch Aggregation',
+    'USAGGPRO'  : 'UniFi Switch Aggregation Pro',
+    'USL8LP'    : 'USW-Lite-8-PoE',
+    'USL8MP'    : 'USW-Mission-Critical',
+    'USL16P'    : 'USW-16-PoE',
+    'USL16LP'   : 'USW-Lite-16-PoE',
+    'USL24'     : 'USW-24-G2',
+    'USL48'     : 'USW-48-G2',
+    'USL24P'    : 'USW-24-PoE',
+    'USL48P'    : 'USW-48-PoE',
+    'UGW3'      : 'USG-3P',
+    'UGW4'      : 'USG-Pro-4',
+    'UGWHD4'    : 'USG',
+    'UGWXG'     : 'USG-XG-8',
+    'UDM'       : 'UDM',
+    'UDMSE'     : 'UDM-SE',
+    'UDMPRO'    : 'UDM-Pro',
+    'UP4'       : 'UVP-X',
+    'UP5'       : 'UVP',
+    'UP5t'      : 'UVP-Pro',
+    'UP7'       : 'UVP-Executive',
+    'UP5c'      : 'UVP',
+    'UP5tc'     : 'UVP-Pro',
+    'UP7c'      : 'UVP-Executive',
+    'UCK'       : 'UCK',
+    'UCK-v2'    : 'UCK',
+    'UCK-v3'    : 'UCK',
+    'UCKG2'     : 'UCK-G2',
+    'UCKP'      : 'UCK-G2-Plus',
+    'UASXG'     : 'UAS-XG',
+    'ULTE'      : 'U-LTE',
+    'ULTEPUS'   : 'U-LTE-Pro',
+    'ULTEPEU'   : 'U-LTE-Pro',
+    'UP1'       : 'USP-Plug',
+    'UP6'       : 'USP-Strip',
+    'USPPDUP'   : 'USP - Power Distribution Unit Pro',
+    'USPRPS'    : 'USP-RPS',
+    'US624P'    : 'UniFi6 Switch 24',
+    'UBB'       : 'UBB',
+    'UXGPRO'    : 'UniFi NeXt-Gen Gateway PRO'
+}
 
 try:
     from cmk.special_agents.utils.argument_parsing import create_default_argument_parser
@@ -40,6 +181,9 @@ class unifi_object(object):
         if hasattr(self,"_init"):
             self._init()
 
+    def __repr__(self):
+        return repr([(_k,_v) for _k,_v in self.__dict__.items() if type(_v) in (int,str)])
+
 ########################################
 ######
 ######      S S I D
@@ -51,9 +195,17 @@ class unifi_network_ssid(unifi_object):
         self._UNIFI_SITE = self._PARENT._PARENT
         for _k,_v in getattr(self,"reasons_bar_chart_now",{}).items():
             setattr(self,_k,_v)
+        setattr(self,f"{self.radio}_num_sta",self.num_sta)
+        setattr(self,f"{self.radio}_tcp_packet_loss",self.tcp_packet_loss)
+        setattr(self,f"{self.radio}_wifi_retries",self.wifi_retries)
+        setattr(self,f"{self.radio}_wifi_latency",self.wifi_latency)
+        setattr(self,f"{self.radio}_avg_client_signal",self.avg_client_signal)
     def __str__(self):
         _ret = []
-        _unwanted = ["essid","radio","id","t","name","radio_name","wlanconf_id","is_wep","up","site_id","ap_mac","state"]
+        _unwanted = ["essid","radio","id","t","name","radio_name","wlanconf_id","is_wep","up","site_id","ap_mac","state",
+            "na_num_sta","ng_num_sta","ng_tcp_packet_loss","na_tcp_packet_loss","na_wifi_retries","ng_wifi_retries",
+            "na_wifi_latency","ng_wifi_latency","na_avg_client_signal","ng_avg_client_signal"
+        ]
         for _k,_v in self.__dict__.items():
             if _k.startswith("_") or _k in _unwanted or type(_v) not in (str,int,float):
                 continue
@@ -101,6 +253,9 @@ class unifi_network_port(unifi_object):
                 self.name = self.ifname
         if not hasattr(self,"port_idx") and hasattr(self,"ifname"):
             self.port_idx = int(self.ifname[-1])+1  ## ethX
+        
+        self.portconf = self._PARENT._PARENT._PORTCONFIGS.get(getattr(self,"portconf_id",None))
+        
 
     def _get_state(self,state):
         return {
@@ -135,6 +290,7 @@ class unifi_device(unifi_object):
         for _k,_v in getattr(self,"sys_stats",{}).items():
             _k = _k.replace("-","_")
             setattr(self,_k,_v)
+        self.model_name = UNIFI_DEVICE_TABLE.get(self.model)
         if self.type in ("ugw","udm"):
             ## change ip to local ip
             self.wan_ip = self.ip
@@ -172,7 +328,7 @@ class unifi_device(unifi_object):
 
     def _get_short_info(self):
         _ret = []
-        _wanted = ["version","ip","mac","serial","model","uptime","upgradeable","num_sta"]
+        _wanted = ["version","ip","mac","serial","model","model_name","uptime","upgradeable","num_sta","adopted","state"]
         for _k,_v in self.__dict__.items():
             if _k.startswith("_") or _k not in _wanted or type(_v) not in (str,int,float):
                 continue
@@ -234,6 +390,8 @@ class unifi_site(unifi_object):
         
         ##pprint(_api.get_data("/stat/rogueap"))
         self._SITE_DEVICES = []
+        self._PORTCONFIGS = {}
+        self._get_portconfig()
         self._get_devices()
         _satisfaction = list(filter(
             lambda x: x != None,map(
@@ -242,6 +400,10 @@ class unifi_site(unifi_object):
         ))
         self.satisfaction = max(0,int(mean(_satisfaction)) if _satisfaction else 0)
 
+    def _get_portconfig(self):
+        _data = self._API.get_portconfig(site=self.name)
+        for _config in _data:
+            self._PORTCONFIGS[_config["_id"]] = _config.get("name")
 
     def _get_devices(self):
         _data = self._API.get_devices(site=self.name)
@@ -308,7 +470,11 @@ class unifi_controller(unifi_object):
         
         _ret = []
         for _ssid,_obj in _dict.items():
-            _ret.append("|".join([_ssid,"num_sta",str(sum(map(lambda x: getattr(x,"num_sta",0),_obj)))]))
+            pprint(_obj)
+            for _key in ("num_sta","ng_num_sta","na_num_sta","ng_tcp_packet_loss","na_tcp_packet_loss","ng_wifi_retries","na_wifi_retries","ng_wifi_latency","na_wifi_latency"):
+                _ret.append("|".join([_ssid,_key,str(sum(map(lambda x: getattr(x,_key,0),_obj)))]))
+            _ret.append("|".join([_ssid,"ng_avg_client_signal",str(mean(map(lambda x: getattr(x,"ng_avg_client_signal",0),filter(lambda x: x.radio == "ng",_obj))))]))
+            _ret.append("|".join([_ssid,"na_avg_client_signal",str(mean(map(lambda x: getattr(x,"na_avg_client_signal",0),filter(lambda x: x.radio == "na",_obj))))]))
             _ret.append("|".join([_ssid,"channels",",".join(
                 sorted(
                     set(map(lambda x: str(getattr(x,"channel","0")),_obj))
@@ -338,7 +504,7 @@ class unifi_controller(unifi_object):
         for _site in self._UNIFI_SITES:
             _ret.append(str(_site))
 
-        _ret.append("<<<unifi_device_shortlist>>>")
+        _ret.append("<<<unifi_device_shortlist:sep(124)>>>")
         for _device in self._UNIFI_DEVICES:
             if _device._piggy_back:
                 _ret.append(_device._get_short_info())
@@ -351,7 +517,7 @@ class unifi_controller(unifi_object):
         if self._API.PIGGYBACK_ATTRIBUT.lower() != "none":
             ## PIGGYBACK DEVICES ##
             for _device in self._UNIFI_DEVICES:
-                if _device._piggy_back:
+                if _device._piggy_back and _device.adopted:
                     _ret.append(str(_device))
         return "\n".join(_ret)
 
@@ -388,6 +554,9 @@ class unifi_controller_api(object):
     def get_sites(self):
         return self.get_data("/stat/sites",site=None)
 
+    def get_portconfig(self,site):
+        return self.get_data("/rest/portconf",site=site)
+
     def get_devices(self,site):
         return self.get_data("/stat/device",site=site)
 
@@ -409,8 +578,8 @@ class unifi_controller_api(object):
             return
         raise unifi_api_exception("Login failed")
 
-    def get_data(self,path,site="default",method="GET"):
-        _json = self.request(method=method,path=path,site=site).json()
+    def get_data(self,path,site="default",method="GET",**kwargs):
+        _json = self.request(method=method,path=path,site=site,**kwargs).json()
         _meta = _json.get("meta",{})
         if _meta.get("rc") == "ok":
             return _json.get("data",[])
@@ -470,11 +639,10 @@ if __name__ == '__main__':
 
     if _api.is_unifios:
         print("AgentOS: UnifiOS")
-    #pprint(_api.get_data("rest/portconf",site="default",method="GET"))
-    ##pprint(_api.get_data("/stat/rogueap"))
+    ##pprint(_api.get_data("/stat/rogueap?within=4"))
     ##pprint(_api.get_data("/rest/user",site="default",method="GET"))
     ##pprint(_api.get_data("/stat/sta",site="default",method="GET"))
-    #sys.exit(0)
+    ##sys.exit(0)
     _controller = unifi_controller(_API=_api)
     if args.rawapi == False:
         print(_controller)
