@@ -23,7 +23,7 @@
 ##  SOFTWARE.
 
 ### 
-__VERSION__ = 0.79
+__VERSION__ = 0.80
 
 import sys
 import socket
@@ -473,8 +473,11 @@ class unifi_controller(unifi_object):
             pprint(_obj)
             for _key in ("num_sta","ng_num_sta","na_num_sta","ng_tcp_packet_loss","na_tcp_packet_loss","ng_wifi_retries","na_wifi_retries","ng_wifi_latency","na_wifi_latency"):
                 _ret.append("|".join([_ssid,_key,str(sum(map(lambda x: getattr(x,_key,0),_obj)))]))
-            _ret.append("|".join([_ssid,"ng_avg_client_signal",str(mean(map(lambda x: getattr(x,"ng_avg_client_signal",0),filter(lambda x: x.radio == "ng",_obj))))]))
-            _ret.append("|".join([_ssid,"na_avg_client_signal",str(mean(map(lambda x: getattr(x,"na_avg_client_signal",0),filter(lambda x: x.radio == "na",_obj))))]))
+            
+            _signals = list(map(lambda x: getattr(x,"ng_avg_client_signal",0),filter(lambda x: x.radio == "ng",_obj)))
+            _ret.append("|".join([_ssid,"ng_avg_client_signal",str(mean(_signals if _signals else [0]))]))
+            _signals = list(map(lambda x: getattr(x,"na_avg_client_signal",0),filter(lambda x: x.radio == "na",_obj)))
+            _ret.append("|".join([_ssid,"na_avg_client_signal",str(mean(_signals if _signals else [0]))]))
             _ret.append("|".join([_ssid,"channels",",".join(
                 sorted(
                     set(map(lambda x: str(getattr(x,"channel","0")),_obj))
