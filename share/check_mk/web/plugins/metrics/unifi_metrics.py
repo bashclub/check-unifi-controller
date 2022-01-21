@@ -121,6 +121,44 @@ graph_info["lan_user_sta_combined"] = {
     ],
 }
 
+
+metric_info["lan_active_sw"] = {
+    "title": _("Active Switches"),
+    "unit": "count",
+    "color": "13/b",
+}
+metric_info["lan_total_sw"] = {
+    "title": _("Total Switches"),
+    "unit": "count",
+    "color": "13/a",
+}
+
+graph_info["lan_active_sw_combined"] = {
+    "title" : _("Active Switches"),
+    "metrics" : [
+        ("lan_active_sw","area"),
+        ("lan_total_sw","line"),
+    ],
+}
+metric_info["wlan_active_ap"] = {
+    "title": _("Active Accesspoints"),
+    "unit": "count",
+    "color": "13/b",
+}
+metric_info["wlan_total_ap"] = {
+    "title": _("Total Accesspoints"),
+    "unit": "count",
+    "color": "13/a",
+}
+
+graph_info["wlan_active_ap_combined"] = {
+    "title" : _("Active Accesspoints"),
+    "metrics" : [
+        ("wlan_active_ap","area"),
+        ("wlan_total_ap","line"),
+    ],
+}
+
 metric_info["wlan_user_sta"] = {
     "title": _("WLAN User"),
     "unit": "count",

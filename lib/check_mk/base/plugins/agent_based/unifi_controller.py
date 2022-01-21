@@ -158,7 +158,7 @@ def discovery_unifi_sites(section):
     for _item in section.values():
         yield Service(item=f"{_item.desc}")
 
-def check_unifi_sites(item,section):
+def check_unifi_sites(item,params,section):
     site = next(filter(lambda x: x.desc == item,section.values()))
     yield Metric("satisfaction",max(0,_safe_int(site.satisfaction)))
 
@@ -169,7 +169,8 @@ def check_unifi_sites(item,section):
         #yield Metric("if_in_bps",_safe_int(site.lan_rx_bytes_r)*8)
         yield Metric("if_out_octets",_safe_int(site.lan_tx_bytes_r))
         #yield Metric("if_out_bps",_safe_int(site.lan_tx_bytes_r)*8)
-        
+        yield Metric("lan_active_sw",_safe_int(site.lan_num_sw))
+        yield Metric("lan_total_sw",_safe_int(site.lan_num_adopted))
         yield Result(
             state=_unifi_status2state(site.lan_status),
             summary=f"LAN: {site.lan_num_sw}/{site.lan_num_adopted} Switch ({site.lan_status})"
@@ -185,6 +186,8 @@ def check_unifi_sites(item,section):
         yield Metric("wlan_iot_sta",_safe_int(site.wlan_num_iot))
         yield Metric("wlan_if_in_octets",_safe_int(site.wlan_rx_bytes_r))
         yield Metric("wlan_if_out_octets",_safe_int(site.wlan_tx_bytes_r))
+        yield Metric("wlan_active_ap",_safe_int(site.wlan_num_ap))
+        yield Metric("wlan_total_ap",_safe_int(site.wlan_num_adopted))
         yield Result(
             state=_unifi_status2state(site.wlan_status),
             summary=f"WLAN: {site.wlan_num_ap}/{site.wlan_num_adopted} AP ({site.wlan_status})"
@@ -208,8 +211,14 @@ def check_unifi_sites(item,section):
             state=_unifi_status2state(site.vpn_status),
             notice=f"WWW Status: {site.vpn_status}"
         )
+
+    if params.get("ignore_alarms"):
+        _alarmstate = State.OK
+    else:
+        _alarmstate = _expect_number(site.num_new_alarms)
+
     yield Result(
-        state=_expect_number(site.num_new_alarms),
+        state=_alarmstate,
         notice=f"{site.num_new_alarms} new Alarm"
     )
 
@@ -223,6 +232,8 @@ register.check_plugin(
     name='unifi_sites',
     service_name='Site %s',
     discovery_function=discovery_unifi_sites,
+    check_default_parameters={},
+    check_ruleset_name="unifi_sites",
     check_function=check_unifi_sites,
 )
 
@@ -258,6 +269,7 @@ register.inventory_plugin(
 
 ############ DEVICE ###########
 def discovery_unifi_device(section):
+    yield Service(item="Device Status")
     yield Service(item="Unifi Device")
     yield Service(item="Uptime")
     yield Service(item="Active-User")
@@ -271,8 +283,16 @@ def discovery_unifi_device(section):
         yield Service(item="Speedtest")
 
 def check_unifi_device(item,section):
-    if section.state != "1":
-        yield IgnoreResults(f"device not active State: {section.state}")
+    _device_state = UNIFI_DEVICE_STATES.get(section.state,"unknown")
+    ## connected OK / pending Warn / Rest Crit
+    _hoststatus = State.OK if section.state == "1" else State.WARN if section.state == "2" else State.CRIT
+    if item == "Device Status":
+        yield Result(
+            state=_hoststatus,
+            summary=f"Status: {_device_state}"
+        )
+    #if section.state != "1":
+    #    yield IgnoreResults(f"device not active State: {section.state}")
         
     if item == "Unifi Device":
         yield Result(

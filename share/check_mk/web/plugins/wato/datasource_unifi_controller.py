@@ -25,11 +25,13 @@
 from cmk.gui.i18n import _
 from cmk.gui.plugins.wato import (
     HostRulespec,
+    CheckParameterRulespecWithItem,
     IndividualOrStoredPassword,
     rulespec_registry,
 )
 from cmk.gui.valuespec import (
     Dictionary,
+    Tuple,
     Alternative,
     NetworkPort,
     Checkbox,
@@ -72,3 +74,28 @@ rulespec_registry.register(
         valuespec=_valuespec_special_agent_unifi_controller,
     ))
 
+def _item_spec_unifi_site():
+    return TextAscii(
+        title=_("Site"),
+        help=_("help Site Text")
+    )
+
+def _parameter_valuespec_unifi_site():
+    return Dictionary(
+        title = _("Unifi Site"),
+        optional_keys=[],
+        elements = [
+            ('ignore_alarms', Checkbox(title=_("Ignore Site Alarms"), default_value=False)),
+        ]
+    )
+
+rulespec_registry.register(
+    CheckParameterRulespecWithItem(
+        check_group_name = "unifi_sites",
+        group=RulespecGroupCheckParametersNetworking,
+        item_spec = _item_spec_unifi_site,
+        match_type = "dict",
+        parameter_valuespec=_parameter_valuespec_unifi_site,
+        title=lambda: _("Unifi Site Parameter")
+    )
+)
