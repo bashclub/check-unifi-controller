@@ -23,7 +23,7 @@
 ##  SOFTWARE.
 
 ### 
-__VERSION__ = 0.87
+__VERSION__ = 0.88
 
 import sys
 import socket
@@ -635,8 +635,7 @@ if __name__ == '__main__':
     parser.add_argument("host",type=str,
                         help="""Host name or IP address of Unifi Controller""")
     args = parser.parse_args()
-    print("<<<check_mk>>>")
-    print(f"Version: {__VERSION__}")
+
     try:
         _api = unifi_controller_api(**args.__dict__)
     except socket.error as e:
@@ -644,7 +643,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if _api.is_unifios:
-        print("AgentOS: UnifiOS")
+
+        labels = {"cmk/os_family": "UnifiOS"}
+        print("<<<labels:sep(0)>>>"
+        print(json.dumps(labels))
+
     ##pprint(_api.get_data("/stat/rogueap?within=4"))
     ##pprint(_api.get_data("/rest/user",site="default",method="GET"))
     ##pprint(_api.get_data("/stat/sta",site="default",method="GET"))
