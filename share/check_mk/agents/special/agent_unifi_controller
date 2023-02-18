@@ -23,7 +23,7 @@
 ##  SOFTWARE.
 
 ### 
-__VERSION__ = 0.83
+__VERSION__ = 0.87
 
 import sys
 import socket
@@ -353,7 +353,7 @@ class unifi_device(unifi_object):
             "lcm_idle_timeout_override","lcm_brightness_override","uplink_depth","mesh_sta_vap_enabled","mesh_uplink_2",
             "lcm_tracker_enabled","model_incompatible","model_in_lts","model_in_eol","country_code","wifi_caps",
             "meshv3_peer_mac","element_peer_mac","vwireEnabled","hide_ch_width","x_authkey","x_ssh_hostkey_fingerprint",
-            "x_fingerprint","x_inform_authkey","op_mode"
+            "x_fingerprint","x_inform_authkey","op_mode","uptime"
         ]
         for _k,_v in self.__dict__.items():
             if _k.startswith("_") or _k in _unwanted or type(_v) not in (str,int,float):
@@ -362,7 +362,10 @@ class unifi_device(unifi_object):
 
         _ret.append("<<<labels:sep(0)>>>")
         _ret.append(f"{{\"unifi_device\":\"unifi-{self.type}\"}}")
-
+        _uptime = getattr(self,"uptime",None)
+        if _uptime:
+            _ret.append("<<<uptime>>>")
+            _ret.append(str(_uptime))
         if self._NETWORK_PORTS:
             _ret += ["","<<<unifi_network_ports:sep(124)>>>"] + [str(_port) for _port in self._NETWORK_PORTS]
         if self._NETWORK_RADIO:
@@ -470,7 +473,7 @@ class unifi_controller(unifi_object):
         
         _ret = []
         for _ssid,_obj in _dict.items():
-            pprint(_obj)
+            #pprint(_obj)
             for _key in ("num_sta","ng_num_sta","na_num_sta","ng_tcp_packet_loss","na_tcp_packet_loss","ng_wifi_retries","na_wifi_retries","ng_wifi_latency","na_wifi_latency"):
                 _ret.append("|".join([_ssid,_key,str(sum(map(lambda x: getattr(x,_key,0),_obj)))]))
             

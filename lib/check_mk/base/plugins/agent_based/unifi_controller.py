@@ -115,7 +115,6 @@ def check_unifi_controller(item,section):
                 state=State.WARN,
                 notice=_("Update available")
             )
-        yield Metric("uptime",int(section.uptime))
     if item == "Cloudkey":
         yield Result(
             state=State.OK,
