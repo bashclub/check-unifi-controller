@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 ##  MIT License
-##  
+##
 ##  Copyright (c) 2021 Bash Club
-##  
+##
 ##  Permission is hereby granted, free of charge, to any person obtaining a copy
 ##  of this software and associated documentation files (the "Software"), to deal
 ##  in the Software without restriction, including without limitation the rights
 ##  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 ##  copies of the Software, and to permit persons to whom the Software is
 ##  furnished to do so, subject to the following conditions:
-##  
+##
 ##  The above copyright notice and this permission notice shall be included in all
 ##  copies or substantial portions of the Software.
-##  
+##
 ##  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ##  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 ##  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,8 +22,8 @@
 ##  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ##  SOFTWARE.
 
-### 
-__VERSION__ = 0.88
+###
+__VERSION__ = 2.2.0
 
 import sys
 import socket
@@ -214,7 +214,7 @@ class unifi_network_ssid(unifi_object):
 
 ########################################
 ######
-######      R A D I O 
+######      R A D I O
 ######
 ########################################
 class unifi_network_radio(unifi_object):
@@ -233,7 +233,7 @@ class unifi_network_radio(unifi_object):
                 continue
             _ret.append(f"{self.name}|{_k}|{_v}")
         return "\n".join(_ret)
-        
+
 ########################################
 ######
 ######      P O R T
@@ -253,9 +253,9 @@ class unifi_network_port(unifi_object):
                 self.name = self.ifname
         if not hasattr(self,"port_idx") and hasattr(self,"ifname"):
             self.port_idx = int(self.ifname[-1])+1  ## ethX
-        
+
         self.portconf = self._PARENT._PARENT._PORTCONFIGS.get(getattr(self,"portconf_id",None))
-        
+
 
     def _get_state(self,state):
         return {
@@ -286,7 +286,7 @@ class unifi_device(unifi_object):
         self._NETWORK_PORTS = []
         self._NETWORK_RADIO = []
         self._NETWORK_SSIDS = []
-        
+
         for _k,_v in getattr(self,"sys_stats",{}).items():
             _k = _k.replace("-","_")
             setattr(self,_k,_v)
@@ -295,7 +295,7 @@ class unifi_device(unifi_object):
             ## change ip to local ip
             self.wan_ip = self.ip
             self.ip = self.connect_request_ip
-        
+
         if getattr(self,"speedtest_status_saved",False):
             _speedtest = getattr(self,"speedtest_status",{})
             self.speedtest_time = int(_speedtest.get("rundate","0"))
@@ -303,11 +303,11 @@ class unifi_device(unifi_object):
             self.speedtest_ping = round(_speedtest.get("latency",-1),1)
             self.speedtest_download = round(_speedtest.get("xput_download",0.0),1)
             self.speedtest_upload = round(_speedtest.get("xput_upload",0.0),1)
-        
+
         _temp = list(map(lambda x: x.get("value",0),getattr(self,"temperatures",[])))
         if _temp:
             self.general_temperature = "{0:.1f}".format(mean(_temp))
-        
+
         for _port in getattr(self,"port_table",[]):
             self._NETWORK_PORTS.append(unifi_network_port(_PARENT=self,**_port))
 
@@ -370,7 +370,7 @@ class unifi_device(unifi_object):
             _ret += ["","<<<unifi_network_ports:sep(124)>>>"] + [str(_port) for _port in self._NETWORK_PORTS]
         if self._NETWORK_RADIO:
             _ret += ["","<<<unifi_network_radios:sep(124)>>>"] + [str(_radio) for _radio in self._NETWORK_RADIO]
-        
+
         if self._NETWORK_SSIDS:
             _ret += ["","<<<unifi_network_ssids:sep(124)>>>"] + [str(_ssid) for _ssid in sorted(self._NETWORK_SSIDS,key=lambda x: x.essid)]
         return "\n".join(_ret)
@@ -390,7 +390,7 @@ class unifi_site(unifi_object):
                     continue
                 #print(f"{_k}:{_v}")
                 setattr(self,f"{_name}_{_k}",_v)
-        
+
         ##pprint(_api.get_data("/stat/rogueap"))
         self._SITE_DEVICES = []
         self._PORTCONFIGS = {}
@@ -470,13 +470,13 @@ class unifi_controller(unifi_object):
         _dict = defaultdict(list)
         for _ssid in self._UNIFI_SSIDS:
             _dict[f"{_ssid.essid}@{_ssid._UNIFI_SITE.desc}"].append(_ssid)
-        
+
         _ret = []
         for _ssid,_obj in _dict.items():
             #pprint(_obj)
             for _key in ("num_sta","ng_num_sta","na_num_sta","ng_tcp_packet_loss","na_tcp_packet_loss","ng_wifi_retries","na_wifi_retries","ng_wifi_latency","na_wifi_latency"):
                 _ret.append("|".join([_ssid,_key,str(sum(map(lambda x: getattr(x,_key,0),_obj)))]))
-            
+
             _signals = list(map(lambda x: getattr(x,"ng_avg_client_signal",0),filter(lambda x: x.radio == "ng",_obj)))
             _ret.append("|".join([_ssid,"ng_avg_client_signal",str(mean(_signals if _signals else [0]))]))
             _signals = list(map(lambda x: getattr(x,"na_avg_client_signal",0),filter(lambda x: x.radio == "na",_obj)))
@@ -488,7 +488,7 @@ class unifi_controller(unifi_object):
             )]))
             _ret.append("|".join([_ssid,"avg_client_signal",str(mean(map(lambda x: getattr(x,"avg_client_signal",0),_obj))) ]))
         return _ret 
-        
+
     def __str__(self):
         _ret = ["<<<unifi_controller:sep(124)>>>"]
         for _k,_v in self.__dict__.items():
@@ -515,7 +515,7 @@ class unifi_controller(unifi_object):
             if _device._piggy_back:
                 _ret.append(_device._get_short_info())
         ## device list
-        
+
         ## ssid list
         _ret.append("<<<unifi_ssid_list:sep(124)>>>")
         _ret += self._get_ssidlist()
