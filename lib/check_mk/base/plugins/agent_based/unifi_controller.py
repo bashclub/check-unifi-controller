@@ -115,6 +115,7 @@ def check_unifi_controller(item,section):
                 state=State.WARN,
                 notice=_("Update available")
             )
+        yield Metric("uptime",int(section.uptime))
     if item == "Cloudkey":
         yield Result(
             state=State.OK,
@@ -270,7 +271,7 @@ register.inventory_plugin(
 def discovery_unifi_device(section):
     yield Service(item="Device Status")
     yield Service(item="Unifi Device")
-    yield Service(item="Unifi Device Uptime")
+    yield Service(item="Uptime")
     yield Service(item="Active-User")
     if  section.type != "uap":  # kein satisfaction bei ap .. radio/ssid haben schon
         yield Service(item="Satisfaction")
@@ -316,7 +317,7 @@ def check_unifi_device(item,section):
             )
         yield Metric("user_sta",_active_user)
         yield Metric("guest_sta",_safe_int(section.guest_num_sta))
-    if item == "Unifi Device Uptime":
+    if item == "Uptime":
         _uptime = int(section.uptime) if section.uptime else -1
         if _uptime > 0:
             yield Result(
@@ -673,41 +674,42 @@ def discovery_unifi_ssids(section):
 
 def check_unifi_ssids(item,section):
     ssid = section.get(item)
-    _channels = ",".join(list(filter(lambda x: _safe_int(x) > 0,[ssid.ng_channel,ssid.na_channel])))
-    yield Result(
-        state=State.OK,
-        summary=f"Channels: {_channels}"
-    )
-    if (_safe_int(ssid.ng_is_guest) + _safe_int(ssid.na_is_guest)) > 0:
+    if ssid:
+        _channels = ",".join(list(filter(lambda x: _safe_int(x) > 0,[ssid.ng_channel,ssid.na_channel])))
         yield Result(
             state=State.OK,
-            summary="Guest"
+            summary=f"Channels: {_channels}"
         )
-    _satisfaction = max(0,min(_safe_int(ssid.ng_satisfaction),_safe_int(ssid.na_satisfaction)))
-    yield Result(
-        state=State.OK,
-        summary=f"Satisfaction: {_satisfaction}"
-    )
-    _num_sta = _safe_int(ssid.na_num_sta) + _safe_int(ssid.ng_num_sta)
-    if _num_sta > 0:
+        if (_safe_int(ssid.ng_is_guest) + _safe_int(ssid.na_is_guest)) > 0:
+            yield Result(
+                state=State.OK,
+                summary="Guest"
+            )
+        _satisfaction = max(0,min(_safe_int(ssid.ng_satisfaction),_safe_int(ssid.na_satisfaction)))
         yield Result(
             state=State.OK,
-            summary=f"User: {_num_sta}"
+            summary=f"Satisfaction: {_satisfaction}"
         )
-    yield Metric("satisfaction",max(0,_satisfaction))
-    yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
-    yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
-
-    yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
-    yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+        _num_sta = _safe_int(ssid.na_num_sta) + _safe_int(ssid.ng_num_sta)
+        if _num_sta > 0:
+            yield Result(
+                state=State.OK,
+                summary=f"User: {_num_sta}"
+            )
+        yield Metric("satisfaction",max(0,_satisfaction))
+        yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
+        yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
     
-    yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
-    yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
-
-    yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
-    yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
-    yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
-    yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
+        yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
+        yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+        
+        yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
+        yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
+    
+        yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
+        yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
+        yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
+        yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
     
     
 
@@ -732,26 +734,27 @@ def discovery_unifi_ssidlist(section):
 
 def check_unifi_ssidlist(item,section):
     ssid = section.get(item)
-    yield Result(
-        state=State.OK,
-        summary=f"Channels: {ssid.channels}"
-    )
-    yield Result(
-        state=State.OK,
-        summary=f"User: {ssid.num_sta}"
-    )
-    yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
-    yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
-    yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
-    yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+    if ssid:
+        yield Result(
+            state=State.OK,
+            summary=f"Channels: {ssid.channels}"
+        )
+        yield Result(
+            state=State.OK,
+            summary=f"User: {ssid.num_sta}"
+        )
+        yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
+        yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
+        yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
+        yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+        
+        yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
+        yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
     
-    yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
-    yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
-
-    yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
-    yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
-    yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
-    yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
+        yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
+        yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
+        yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
+        yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
 
 register.agent_section(
     name = 'unifi_ssid_list',
