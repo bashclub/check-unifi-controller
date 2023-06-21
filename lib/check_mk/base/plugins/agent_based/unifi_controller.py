@@ -158,7 +158,11 @@ def discovery_unifi_sites(section):
         yield Service(item=f"{_item.desc}")
 
 def check_unifi_sites(item,params,section):
-    site = next(filter(lambda x: x.desc == item,section.values()))
+    try:
+        site = next(filter(lambda x: x.desc == item,section.values()))
+    except StopIteration:
+        return
+
     yield Metric("satisfaction",max(0,_safe_int(site.satisfaction)))
 
     if site.lan_status != "unknown":
@@ -540,7 +544,11 @@ def check_unifi_network_port_if(  ##fixme parsed_section_name
     section: Section,
 ) -> CheckResult:
     _converted_ifs = _convert_unifi_counters_if(section)
-    iface = next(filter(lambda x: _safe_int(item,-1) == _safe_int(x.index) or item == x.alias,_converted_ifs),None) ## fix Service Discovery appearance alias/descr
+    try:
+        iface = next(filter(lambda x: _safe_int(item,-1) == _safe_int(x.index) or item == x.alias,_converted_ifs),None) ## fix Service Discovery appearance alias/descr
+    except StopIteration:
+        return
+
     yield from interfaces.check_multiple_interfaces(
         item,
         params,
@@ -628,7 +636,11 @@ def discovery_unifi_radios(section):
 
 def check_unifi_radios(item,section):
     _item = { "2.4Ghz" : "ng", "5Ghz" : "na" }.get(item)
-    radio = next(filter(lambda x: x.radio == _item,section.values()))
+    try:
+        radio = next(filter(lambda x: x.radio == _item,section.values()))
+    except StopIteration:
+        return
+
     yield Metric("read_data",_safe_int(radio.rx_bytes))
     yield Metric("write_data",_safe_int(radio.tx_bytes))
     yield Metric("satisfaction",max(0,_safe_int(radio.satisfaction)))
@@ -672,7 +684,11 @@ def discovery_unifi_ssids(section):
         yield Service(item=_ssid)
 
 def check_unifi_ssids(item,section):
-    ssid = section.get(item)
+    try:
+        ssid = section[item]
+    except KeyError:
+        return
+
     _channels = ",".join(list(filter(lambda x: _safe_int(x) > 0,[ssid.ng_channel,ssid.na_channel])))
     yield Result(
         state=State.OK,
@@ -731,7 +747,11 @@ def discovery_unifi_ssidlist(section):
         yield Service(item=_ssid)
 
 def check_unifi_ssidlist(item,section):
-    ssid = section.get(item)
+    try:
+        ssid = section[item]
+    except KeyError:
+        return
+
     yield Result(
         state=State.OK,
         summary=f"Channels: {ssid.channels}"
