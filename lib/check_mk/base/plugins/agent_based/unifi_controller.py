@@ -415,7 +415,7 @@ register.inventory_plugin(
 
 ############ DEVICEPORT ###########
 @dataclass
-class unifi_interface(interfaces.Interface):
+class unifi_interface(interfaces.InterfaceWithCounters):
     jumbo           : bool = False
     satisfaction    : int = 0
     poe_enable      : bool = False
@@ -429,9 +429,6 @@ class unifi_interface(interfaces.Interface):
     dot1x_status    : Optional[str] = None
     ip_address      : Optional[str] = None
     portconf        : Optional[str] = None
-
-    def __post_init__(self) -> None:
-        self.finalize()
 
 def _convert_unifi_counters_if(section: Section) -> interfaces.Section:
     ##  10|port_idx|10
@@ -488,25 +485,31 @@ def _convert_unifi_counters_if(section: Section) -> interfaces.Section:
 
     return [ 
         unifi_interface(
-            index=str(netif.port_idx),
-            descr=netif.name,
-            alias=netif.name,
-            type='6',
-            speed=_safe_int(netif.speed)*1000000,
-            oper_status=netif.oper_status,
-            admin_status=netif.admin_status,
-            in_octets=_safe_int(netif.rx_bytes),
-            in_ucast=_safe_int(netif.rx_packets),
-            in_mcast=_safe_int(netif.rx_multicast),
-            in_bcast=_safe_int(netif.rx_broadcast),
-            in_discards=_safe_int(netif.rx_dropped),
-            in_errors=_safe_int(netif.rx_errors),
-            out_octets=_safe_int(netif.tx_bytes),
-            out_ucast=_safe_int(netif.tx_packets),
-            out_mcast=_safe_int(netif.tx_multicast),
-            out_bcast=_safe_int(netif.tx_broadcast),
-            out_discards=_safe_int(netif.tx_dropped),
-            out_errors=_safe_int(netif.tx_errors),
+            attributes=interfaces.Attributes(
+                index=str(netif.port_idx),
+                descr=netif.name,
+                type="6",
+                speed=int(netif.speed) * 1000000,
+                oper_status="1" if netif.oper_status == "1" else "2",
+                out_qlen=None,
+                alias=netif.name,
+                phys_address=None,
+            ),
+            counters=interfaces.Counters(
+                in_octets=int(netif.rx_bytes),
+                in_ucast=int(netif.rx_packets),
+                in_mcast=int(netif.rx_multicast),
+                in_bcast=int(netif.rx_broadcast),
+                in_disc=int(netif.rx_dropped),
+                in_err=int(netif.rx_errors),
+                out_octets=int(netif.tx_bytes),
+                out_ucast=int(netif.tx_packets),
+                out_mcast=int(netif.tx_multicast),
+                out_bcast=int(netif.tx_broadcast),
+                out_disc=int(netif.tx_dropped),
+                out_err=int(netif.tx_errors),
+            ),
+
             jumbo=True if netif.jumbo == "1" else False,
             satisfaction=_safe_int(netif.satisfaction) if netif.satisfaction and netif.oper_status == "1" else 0,
             poe_enable=True if netif.poe_enable == "1" else False,
@@ -540,7 +543,7 @@ def check_unifi_network_port_if(  ##fixme parsed_section_name
     section: Section,
 ) -> CheckResult:
     _converted_ifs = _convert_unifi_counters_if(section)
-    iface = next(filter(lambda x: _safe_int(item,-1) == _safe_int(x.index) or item == x.alias,_converted_ifs),None) ## fix Service Discovery appearance alias/descr
+    iface = next(filter(lambda x: _safe_int(item,-1) == _safe_int(x.attributes.index) or item == x.attributes.alias,_converted_ifs),None) ## fix Service Discovery appearance alias/descr
     yield from interfaces.check_multiple_interfaces(
         item,
         params,
