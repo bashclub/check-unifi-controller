@@ -337,7 +337,7 @@ class unifi_device(unifi_object):
 
     def __str__(self):
         if self._piggy_back:
-            _piggybackname = getattr(self,self._API.PIGGYBACK_ATTRIBUT,self.name)
+            _piggybackname = getattr(self,self._API.PIGGYBACK_ATTRIBUT,self.name).replace(" ", "_")
             _ret = [f"<<<<{_piggybackname}>>>>"]
         else:
             _ret = []
