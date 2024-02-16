@@ -23,7 +23,7 @@
 ##  SOFTWARE.
 
 ###
-__VERSION__ = 2.2.0
+__VERSION__ = "2.2.0"
 
 import sys
 import socket
@@ -645,7 +645,7 @@ if __name__ == '__main__':
     if _api.is_unifios:
 
         labels = {"cmk/os_family": "UnifiOS"}
-        print("<<<labels:sep(0)>>>"
+        print("<<<labels:sep(0)>>>")
         print(json.dumps(labels))
 
     ##pprint(_api.get_data("/stat/rogueap?within=4"))
