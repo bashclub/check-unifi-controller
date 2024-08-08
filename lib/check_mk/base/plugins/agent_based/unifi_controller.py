@@ -115,7 +115,6 @@ def check_unifi_controller(item,section):
                 state=State.WARN,
                 notice=_("Update available")
             )
-        yield Metric("uptime",int(section.uptime))
     if item == "Cloudkey":
         yield Result(
             state=State.OK,
@@ -271,7 +270,6 @@ register.inventory_plugin(
 def discovery_unifi_device(section):
     yield Service(item="Device Status")
     yield Service(item="Unifi Device")
-    yield Service(item="Uptime")
     yield Service(item="Active-User")
     if  section.type != "uap":  # kein satisfaction bei ap .. radio/ssid haben schon
         yield Service(item="Satisfaction")
@@ -317,14 +315,6 @@ def check_unifi_device(item,section):
             )
         yield Metric("user_sta",_active_user)
         yield Metric("guest_sta",_safe_int(section.guest_num_sta))
-    if item == "Uptime":
-        _uptime = int(section.uptime) if section.uptime else -1
-        if _uptime > 0:
-            yield Result(
-                state=State.OK,
-                summary=render.timespan(_uptime)
-            )
-            yield Metric("unifi_uptime",_uptime)
     if item == "Satisfaction":
         yield Result(
             state=State.OK,

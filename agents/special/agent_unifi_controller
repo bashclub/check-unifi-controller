@@ -23,7 +23,7 @@
 ##  SOFTWARE.
 
 ###
-__VERSION__ = 2.2.0
+__VERSION__ = "2.2.0"
 
 import sys
 import socket
@@ -492,7 +492,7 @@ class unifi_controller(unifi_object):
     def __str__(self):
         _ret = ["<<<unifi_controller:sep(124)>>>"]
         for _k,_v in self.__dict__.items():
-            if _k.startswith("_") or type(_v) not in (str,int,float):
+            if _k == "uptime" or _k.startswith("_") or type(_v) not in (str,int,float):
                 continue
             _ret.append(f"{_k}|{_v}")
 
@@ -502,6 +502,10 @@ class unifi_controller(unifi_object):
             _udm = _has_udm[0]
             _udm._piggy_back = False
             _ret.append(str(_udm))
+
+        if "uptime" in self.__dict__:
+            _ret.append("<<<uptime>>>")
+            _ret.append(f"{self.uptime}")
 
         _ret.append("<<<labels:sep(0)>>>")
         _ret.append(f"{{\"unifi_device\":\"unifi-{self.type}\"}}")
@@ -645,7 +649,7 @@ if __name__ == '__main__':
     if _api.is_unifios:
 
         labels = {"cmk/os_family": "UnifiOS"}
-        print("<<<labels:sep(0)>>>"
+        print("<<<labels:sep(0)>>>")
         print(json.dumps(labels))
 
     ##pprint(_api.get_data("/stat/rogueap?within=4"))
