@@ -556,7 +556,7 @@ class unifi_controller_api(object):
 
     def check_unifi_os(self):
         _response = self.request("GET",url=self.url,allow_redirects=False)
-        self.is_unifios= _response.status_code == 200 and _response.headers.get("x-csrf-token")
+        self.is_unifios= _response.status_code == 200
 
     def get_sysinfo(self):
         return self.get_data("/stat/sysinfo")
