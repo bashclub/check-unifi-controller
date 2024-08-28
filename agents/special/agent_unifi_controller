@@ -438,7 +438,7 @@ class unifi_controller(unifi_object):
         for _dev in self._UNIFI_DEVICES:
             _dev._get_uplink()
         if hasattr(self,"cloudkey_version"):
-            self.cloudkey_version = re.sub(".*?v(\d+\.\d+\.\d+\.[a-z0-9]+).*","\\1",self.cloudkey_version)
+            self.cloudkey_version = re.sub(r".*?v(\d+\.\d+\.\d+\.[a-z0-9]+).*","\\1",self.cloudkey_version)
         self.type = getattr(self,"ubnt_device_type","unifi-sw-controller")
         self.controller_version = self.version
         delattr(self,"version")
