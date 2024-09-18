@@ -3,7 +3,7 @@
 #
 ##  MIT License
 ##  
-##  Copyright (c) 2021 Bash Club
+##  Copyright (c) 2024 Bash Club
 ##  
 ##  Permission is hereby granted, free of charge, to any person obtaining a copy
 ##  of this software and associated documentation files (the "Software"), to deal
@@ -120,7 +120,7 @@ def check_unifi_controller(item,section):
             state=State.OK,
             summary=f"Version: {section.cloudkey_version}"
         )
-        if int(section.cloudkey_update_available) > 0:
+        if _safe_int(section.cloudkey_update_available) > 0:
             yield Result(
                 state=State.WARN,
                 notice=_("Update available")
@@ -270,7 +270,6 @@ register.inventory_plugin(
 def discovery_unifi_device(section):
     yield Service(item="Device Status")
     yield Service(item="Unifi Device")
-    yield Service(item="Unifi Device Uptime")
     yield Service(item="Active-User")
     if  section.type != "uap":  # kein satisfaction bei ap .. radio/ssid haben schon
         yield Service(item="Satisfaction")
@@ -316,14 +315,6 @@ def check_unifi_device(item,section):
             )
         yield Metric("user_sta",_active_user)
         yield Metric("guest_sta",_safe_int(section.guest_num_sta))
-    if item == "Unifi Device Uptime":
-        _uptime = int(section.uptime) if section.uptime else -1
-        if _uptime > 0:
-            yield Result(
-                state=State.OK,
-                summary=render.timespan(_uptime)
-            )
-            yield Metric("unifi_uptime",_uptime)
     if item == "Satisfaction":
         yield Result(
             state=State.OK,
@@ -415,7 +406,7 @@ register.inventory_plugin(
 
 ############ DEVICEPORT ###########
 @dataclass
-class unifi_interface(interfaces.Interface):
+class unifi_interface(interfaces.InterfaceWithCounters):
     jumbo           : bool = False
     satisfaction    : int = 0
     poe_enable      : bool = False
@@ -430,8 +421,6 @@ class unifi_interface(interfaces.Interface):
     ip_address      : Optional[str] = None
     portconf        : Optional[str] = None
 
-    def __post_init__(self) -> None:
-        self.finalize()
 
 def _convert_unifi_counters_if(section: Section) -> interfaces.Section:
     ##  10|port_idx|10
@@ -488,25 +477,29 @@ def _convert_unifi_counters_if(section: Section) -> interfaces.Section:
 
     return [ 
         unifi_interface(
-            index=str(netif.port_idx),
-            descr=netif.name,
-            alias=netif.name,
-            type='6',
-            speed=_safe_int(netif.speed)*1000000,
-            oper_status=netif.oper_status,
-            admin_status=netif.admin_status,
-            in_octets=_safe_int(netif.rx_bytes),
-            in_ucast=_safe_int(netif.rx_packets),
-            in_mcast=_safe_int(netif.rx_multicast),
-            in_bcast=_safe_int(netif.rx_broadcast),
-            in_discards=_safe_int(netif.rx_dropped),
-            in_errors=_safe_int(netif.rx_errors),
-            out_octets=_safe_int(netif.tx_bytes),
-            out_ucast=_safe_int(netif.tx_packets),
-            out_mcast=_safe_int(netif.tx_multicast),
-            out_bcast=_safe_int(netif.tx_broadcast),
-            out_discards=_safe_int(netif.tx_dropped),
-            out_errors=_safe_int(netif.tx_errors),
+            attributes=interfaces.Attributes(
+                index=str(netif.port_idx),
+                descr=netif.name,
+                alias=netif.name,
+                type='6',
+                speed=_safe_int(netif.speed)*1000000,
+                oper_status=netif.oper_status,
+                admin_status=netif.admin_status,
+            ),
+            counters=interfaces.Counters(
+                in_octets=_safe_int(netif.rx_bytes),
+                in_ucast=_safe_int(netif.rx_packets),
+                in_mcast=_safe_int(netif.rx_multicast),
+                in_bcast=_safe_int(netif.rx_broadcast),
+                in_disc=_safe_int(netif.rx_dropped),
+                in_err=_safe_int(netif.rx_errors),
+                out_octets=_safe_int(netif.tx_bytes),
+                out_ucast=_safe_int(netif.tx_packets),
+                out_mcast=_safe_int(netif.tx_multicast),
+                out_bcast=_safe_int(netif.tx_broadcast),
+                out_disc=_safe_int(netif.tx_dropped),
+                out_err=_safe_int(netif.tx_errors),
+            ),
             jumbo=True if netif.jumbo == "1" else False,
             satisfaction=_safe_int(netif.satisfaction) if netif.satisfaction and netif.oper_status == "1" else 0,
             poe_enable=True if netif.poe_enable == "1" else False,
@@ -540,7 +533,7 @@ def check_unifi_network_port_if(  ##fixme parsed_section_name
     section: Section,
 ) -> CheckResult:
     _converted_ifs = _convert_unifi_counters_if(section)
-    iface = next(filter(lambda x: _safe_int(item,-1) == _safe_int(x.index) or item == x.alias,_converted_ifs),None) ## fix Service Discovery appearance alias/descr
+    iface = next(filter(lambda x: _safe_int(item,-1) == _safe_int(x.attributes.index) or item == x.attributes.alias,_converted_ifs),None) ## fix Service Discovery appearance alias/descr
     yield from interfaces.check_multiple_interfaces(
         item,
         params,
@@ -673,41 +666,42 @@ def discovery_unifi_ssids(section):
 
 def check_unifi_ssids(item,section):
     ssid = section.get(item)
-    _channels = ",".join(list(filter(lambda x: _safe_int(x) > 0,[ssid.ng_channel,ssid.na_channel])))
-    yield Result(
-        state=State.OK,
-        summary=f"Channels: {_channels}"
-    )
-    if (_safe_int(ssid.ng_is_guest) + _safe_int(ssid.na_is_guest)) > 0:
+    if ssid:
+        _channels = ",".join(list(filter(lambda x: _safe_int(x) > 0,[ssid.ng_channel,ssid.na_channel])))
         yield Result(
             state=State.OK,
-            summary="Guest"
+            summary=f"Channels: {_channels}"
         )
-    _satisfaction = max(0,min(_safe_int(ssid.ng_satisfaction),_safe_int(ssid.na_satisfaction)))
-    yield Result(
-        state=State.OK,
-        summary=f"Satisfaction: {_satisfaction}"
-    )
-    _num_sta = _safe_int(ssid.na_num_sta) + _safe_int(ssid.ng_num_sta)
-    if _num_sta > 0:
+        if (_safe_int(ssid.ng_is_guest) + _safe_int(ssid.na_is_guest)) > 0:
+            yield Result(
+                state=State.OK,
+                summary="Guest"
+            )
+        _satisfaction = max(0,min(_safe_int(ssid.ng_satisfaction),_safe_int(ssid.na_satisfaction)))
         yield Result(
             state=State.OK,
-            summary=f"User: {_num_sta}"
+            summary=f"Satisfaction: {_satisfaction}"
         )
-    yield Metric("satisfaction",max(0,_satisfaction))
-    yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
-    yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
-
-    yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
-    yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+        _num_sta = _safe_int(ssid.na_num_sta) + _safe_int(ssid.ng_num_sta)
+        if _num_sta > 0:
+            yield Result(
+                state=State.OK,
+                summary=f"User: {_num_sta}"
+            )
+        yield Metric("satisfaction",max(0,_satisfaction))
+        yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
+        yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
     
-    yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
-    yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
-
-    yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
-    yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
-    yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
-    yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
+        yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
+        yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+        
+        yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
+        yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
+    
+        yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
+        yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
+        yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
+        yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
     
     
 
@@ -732,26 +726,27 @@ def discovery_unifi_ssidlist(section):
 
 def check_unifi_ssidlist(item,section):
     ssid = section.get(item)
-    yield Result(
-        state=State.OK,
-        summary=f"Channels: {ssid.channels}"
-    )
-    yield Result(
-        state=State.OK,
-        summary=f"User: {ssid.num_sta}"
-    )
-    yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
-    yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
-    yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
-    yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+    if ssid:
+        yield Result(
+            state=State.OK,
+            summary=f"Channels: {ssid.channels}"
+        )
+        yield Result(
+            state=State.OK,
+            summary=f"User: {ssid.num_sta}"
+        )
+        yield Metric("wlan_24Ghz_num_user",_safe_int(ssid.ng_num_sta) )
+        yield Metric("wlan_5Ghz_num_user",_safe_int(ssid.na_num_sta) )
+        yield Metric("na_avg_client_signal",_safe_int(ssid.na_avg_client_signal))
+        yield Metric("ng_avg_client_signal",_safe_int(ssid.ng_avg_client_signal))
+        
+        yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
+        yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
     
-    yield Metric("na_tcp_packet_loss",_safe_int(ssid.na_tcp_packet_loss))
-    yield Metric("ng_tcp_packet_loss",_safe_int(ssid.ng_tcp_packet_loss))
-
-    yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
-    yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
-    yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
-    yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
+        yield Metric("na_wifi_retries",_safe_int(ssid.na_wifi_retries))
+        yield Metric("ng_wifi_retries",_safe_int(ssid.ng_wifi_retries))
+        yield Metric("na_wifi_latency",_safe_int(ssid.na_wifi_latency))
+        yield Metric("ng_wifi_latency",_safe_int(ssid.ng_wifi_latency))
 
 register.agent_section(
     name = 'unifi_ssid_list',
@@ -764,7 +759,5 @@ register.check_plugin(
     discovery_function=discovery_unifi_ssidlist,
     check_function=check_unifi_ssidlist,
 )
-
-
 
 
