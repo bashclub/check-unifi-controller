@@ -2,7 +2,7 @@
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 ##  MIT License
 ##  
-##  Copyright (c) 2021 Bash Club
+##  Copyright (c) 2024 Bash Club
 ##  
 ##  Permission is hereby granted, free of charge, to any person obtaining a copy
 ##  of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 ##  SOFTWARE.
 
 ### 
-__VERSION__ = 0.88
+__VERSION__ = 2.01
 
 import sys
 import socket
@@ -44,117 +44,130 @@ except ImportError:
 UNIFI_DEVICE_TABLE = {
     'BZ2'       : 'UAP',
     'BZ2LR'     : 'UAP-LR',
+    'S216150'   : 'US-16-150W',
+    'S224250'   : 'US-24-250W',
+    'S224500'   : 'US-24-500W',
+    'S248500'   : 'US-48-500W',
+    'S248750'   : 'US-48-750W',
+    'S28150'    : 'US-8-150W',
     'U2HSR'     : 'UAP-Outdoor+',
     'U2IW'      : 'UAP-IW',
-    'U2L48'     : 'UAP-AC-LR',
-    'U2Lv2'     : 'UAP-AC-LR',
+    'U2L48'     : 'UAP-LR',
+    'U2Lv2'     : 'UAP-LRv2',
     'U2M'       : 'UAP-Mini',
     'U2O'       : 'UAP-Outdoor',
-    'U2S48'     : 'UAP-AC',
-    'U2Sv2'     : 'UAP-AC',
+    'U2S48'     : 'UAP',
+    'U2Sv2'     : 'UAPv2',
     'U5O'       : 'UAP-Outdoor5',
+    'U6ENT'     : 'U6-Enterprise',
+    'U6EXT'     : 'U6-Extender',
+    'U6IW'      : 'U6-IW',
+    'U6M'       : 'U6-Mesh',
     'U7E'       : 'UAP-AC',
     'U7EDU'     : 'UAP-AC-EDU',
     'U7Ev2'     : 'UAP-AC',
     'U7HD'      : 'UAP-AC-HD',
-    'U7SHD'     : 'UAP-AC-SHD',
-    'U7NHD'     : 'UAP-nanoHD',
-    'UFLHD'     : 'UAP-FlexHD',
-    'UHDIW'     : 'UAP-IW-HD',
-    'UAIW6'     : 'U6-IW',
-    'UAE6'      : 'U6-Extender',
-    'UAL6'      : 'U6-Lite',
-    'UAM6'      : 'U6-Mesh',
-    'UALR6'     : 'U6-LR-EA',
-    'UAP6'      : 'U6-LR',
-    'UALR6v2'   : 'U6-LR',
-    'UALR6v3'   : 'U6-LR',
-    'UCXG'      : 'UAP-XG',
-    'UXSDM'     : 'UWB-XG',
-    'UXBSDM'    : 'UWB-XG-BK',
-    'UCMSH'     : 'UAP-XG-Mesh',
     'U7IW'      : 'UAP-AC-IW',
     'U7IWP'     : 'UAP-AC-IW-Pro',
-    'U7MP'      : 'UAP-AC-M-Pro',
     'U7LR'      : 'UAP-AC-LR',
     'U7LT'      : 'UAP-AC-Lite',
-    'U7O'       : 'UAP-AC-Outdoor',
-    'U7P'       : 'UAP-Pro',
+    'U7MP'      : 'UAP-AC-M-Pro',
     'U7MSH'     : 'UAP-AC-M',
+    'U7NHD'     : 'UAP-nanoHD',
+    'U7O'       : 'UAP-AC-Outdoor',
+    'U7P'       : 'UAP-AC-Pro',
     'U7PG2'     : 'UAP-AC-Pro',
-    'p2N'       : 'PICOM2HP',
-    'UDMB'      : 'UAP-BeaconHD',
-    'USF5P'     : 'USW-Flex',
-    'US8'       : 'US-8',
-    'US8P60'    : 'US-8-60W',
-    'US8P150'   : 'US-8-150W',
-    'S28150'    : 'US-8-150W',
-    'USC8'      : 'US-8',
-    'USC8P60'   : 'US-8-60W',
-    'USC8P150'  : 'US-8-150W',
-    'US16P150'  : 'US-16-150W',
-    'S216150'   : 'US-16-150W',
-    'US24'      : 'US-24-G1',
-    'US24PRO'   : 'USW-Pro-24-PoE',
-    'US24PRO2'  : 'USW-Pro-24',
-    'US24P250'  : 'US-24-250W',
-    'US24PL2'   : 'US-L2-24-PoE',
-    'US24P500'  : 'US-24-500W',
-    'S224250'   : 'US-24-250W',
-    'S224500'   : 'US-24-500W',
-    'US48'      : 'US-48-G1',
-    'US48PRO'   : 'USW-Pro-48-PoE',
-    'US48PRO2'  : 'USW-Pro-48',
-    'US48P500'  : 'US-48-500W',
-    'US48PL2'   : 'US-L2-48-PoE',
-    'US48P750'  : 'US-48-750W',
-    'S248500'   : 'US-48-500W',
-    'S248750'   : 'US-48-750W',
-    'US6XG150'  : 'US-XG-6PoE',
-    'USMINI'    : 'USW-Flex-Mini',
-    'USXG'      : 'US-16-XG',
-    'USC8P450'  : 'USW-Industrial',
-    'UDC48X6'   : 'USW-Leaf',
-    'USL8A'     : 'UniFi Switch Aggregation',
-    'USAGGPRO'  : 'UniFi Switch Aggregation Pro',
-    'USL8LP'    : 'USW-Lite-8-PoE',
-    'USL8MP'    : 'USW-Mission-Critical',
-    'USL16P'    : 'USW-16-PoE',
-    'USL16LP'   : 'USW-Lite-16-PoE',
-    'USL24'     : 'USW-24-G2',
-    'USL48'     : 'USW-48-G2',
-    'USL24P'    : 'USW-24-PoE',
-    'USL48P'    : 'USW-48-PoE',
-    'UGW3'      : 'USG-3P',
-    'UGW4'      : 'USG-Pro-4',
-    'UGWHD4'    : 'USG',
-    'UGWXG'     : 'USG-XG-8',
-    'UDM'       : 'UDM',
-    'UDMSE'     : 'UDM-SE',
-    'UDMPRO'    : 'UDM-Pro',
-    'UP4'       : 'UVP-X',
-    'UP5'       : 'UVP',
-    'UP5t'      : 'UVP-Pro',
-    'UP7'       : 'UVP-Executive',
-    'UP5c'      : 'UVP',
-    'UP5tc'     : 'UVP-Pro',
-    'UP7c'      : 'UVP-Executive',
+    'U7SHD'     : 'UAP-AC-SHD',
+    'UAE6'      : 'U6-Extender-EA',
+    'UAIW6'     : 'U6-IW-EA',
+    'UAL6'      : 'U6-Lite',
+    'UALR6'     : 'U6-LR-EA',
+    'UALR6v2'   : 'U6-LR',
+    'UALR6v3'   : 'U6-LR',
+    'UAM6'      : 'U6-Mesh-EA',
+    'UAP6'      : 'U6-LR',
+    'UAP6MP'    : 'U6-Pro',
+    'UASXG'     : 'UAS-XG',
+    'UBB'       : 'UBB',
+    'UBBXG'     : 'UBB-XG',
     'UCK'       : 'UCK',
     'UCK-v2'    : 'UCK',
     'UCK-v3'    : 'UCK',
     'UCKG2'     : 'UCK-G2',
     'UCKP'      : 'UCK-G2-Plus',
-    'UASXG'     : 'UAS-XG',
+    'UCMSH'     : 'UAP-XG-Mesh',
+    'UCXG'      : 'UAP-XG',
+    'UDC48X6'   : 'USW-Leaf',
+    'UDM'       : 'UDM',
+    'UDMB'      : 'UAP-BeaconHD',
+    'UDMPRO'    : 'UDM-Pro',
+    'UDMPROSE'  : 'UDM-SE',
+    'UDR'       : 'UDR',
+    'UDW'       : 'UDW',
+    'UDWPRO'    : 'UDWPRO',
+    'UFLHD'     : 'UAP-FlexHD',
+    'UGW3'      : 'USG-3P',
+    'UGW4'      : 'USG-Pro-4',
+    'UGWHD4'    : 'USG',
+    'UGWXG'     : 'USG-XG-8',
+    'UHDIW'     : 'UAP-IW-HD',
     'ULTE'      : 'U-LTE',
-    'ULTEPUS'   : 'U-LTE-Pro',
     'ULTEPEU'   : 'U-LTE-Pro',
+    'ULTEPUS'   : 'U-LTE-Pro',
     'UP1'       : 'USP-Plug',
+    'UP4'       : 'UVP-X',
+    'UP5'       : 'UVP',
+    'UP5c'      : 'UVP',
+    'UP5t'      : 'UVP-Pro',
+    'UP5tc'     : 'UVP-Pro',
     'UP6'       : 'USP-Strip',
-    'USPPDUP'   : 'USP - Power Distribution Unit Pro',
+    'UP7'       : 'UVP-Executive',
+    'UP7c'      : 'UVP-Executive',
+    'US16P150'  : 'US-16-150W',
+    'US24'      : 'USW-24-G1',
+    'US24P250'  : 'US-24-250W',
+    'US24P500'  : 'US-24-500W',
+    'US24PL2'   : 'US-L2-24-PoE',
+    'US24PRO'   : 'USW-Pro-24-PoE',
+    'US24PRO2'  : 'USW-Pro-24',
+    'US48'      : 'US-48-G1',
+    'US48P500'  : 'US-48-500W',
+    'US48P750'  : 'US-48-750W',
+    'US48PL2'   : 'US-L2-48-PoE',
+    'US48PRO'   : 'USW-Pro-48-PoE',
+    'US48PRO2'  : 'USW-Pro-48',
+    'US624P'    : 'USW-Enterprise-24-PoE',
+    'US648P'    : 'USW-Enterprise-48-PoE',
+    'US68P'     : 'USW-Enterprise-8-PoE',
+    'US6XG150'  : 'US-XG-6PoE',
+    'US8'       : 'US-8',
+    'US8P150'   : 'US-8-150W',
+    'US8P60'    : 'US-8-60W',
+    'USAGGPRO'  : 'USW-Pro-Aggregation',
+    'USC8'      : 'US-8',
+    'USC8P150'  : 'US-8-150W',
+    'USC8P450'  : 'USW-Industrial',
+    'USC8P60'   : 'US-8-60W',
+    'USF5P'     : 'USW-Flex',
+    'USFXG'     : 'USW-Flex-XG',
+    'USL16LP'   : 'USW-Lite-16-PoE',
+    'USL16P'    : 'USW-16-PoE',
+    'USL24'     : 'USW-24-G2',
+    'USL24P'    : 'USW-24-PoE',
+    'USL48'     : 'USW-48-G2',
+    'USL48P'    : 'USW-48-PoE',
+    'USL8A'     : 'USW-Aggregation',
+    'USL8LP'    : 'USW-Lite-8-PoE',
+    'USL8MP'    : 'USW-Mission-Critical',
+    'USMINI'    : 'USW-Flex-Mini',
+    'USPPDUP'   : 'USP-PDU-Pro',
     'USPRPS'    : 'USP-RPS',
-    'US624P'    : 'UniFi6 Switch 24',
-    'UBB'       : 'UBB',
-    'UXGPRO'    : 'UniFi NeXt-Gen Gateway PRO'
+    'USXG'      : 'US-16-XG',
+    'USXG24'    : 'USW-EnterpriseXG-24',
+    'UXBSDM'    : 'UWB-XG-BK',
+    'UXGPRO'    : 'UXG-Pro',
+    'UXSDM'     : 'UWB-XG',
+    'p2N'       : 'PICOM2HP'
 }
 
 try:
@@ -291,7 +304,7 @@ class unifi_device(unifi_object):
             _k = _k.replace("-","_")
             setattr(self,_k,_v)
         self.model_name = UNIFI_DEVICE_TABLE.get(self.model)
-        if self.type in ("ugw","udm"):
+        if self.type in ("ugw","udm") and hasattr(self,"connect_request_ip"):
             ## change ip to local ip
             self.wan_ip = self.ip
             self.ip = self.connect_request_ip
@@ -552,7 +565,11 @@ class unifi_controller_api(object):
 
     def check_unifi_os(self):
         _response = self.request("GET",url=self.url,allow_redirects=False)
-        self.is_unifios= _response.status_code == 200 and _response.headers.get("x-csrf-token")
+        _osid = re.findall('UNIFI_OS_MANIFEST.*?"id":"(\w+)"',_response.text)
+        if _osid and _osid[0] in ("UCKP","UNVR","UDMPRO","UDMENT","UDM","UDR"):
+            self.is_unifios = _osid[0]
+        else:
+            self.is_unifios = []
 
     def get_sysinfo(self):
         return self.get_data("/stat/sysinfo")
@@ -586,14 +603,21 @@ class unifi_controller_api(object):
 
     def get_data(self,path,site="default",method="GET",**kwargs):
         _json = self.request(method=method,path=path,site=site,**kwargs).json()
-        _meta = _json.get("meta",{})
-        if _meta.get("rc") == "ok":
-            return _json.get("data",[])
+        if type(_json) == dict:
+            _meta = _json.get("meta",{})
+            if _meta.get("rc") == "ok":
+                return _json.get("data",[])
+            if _json.get("modelKey") == "nvr":
+                return _json
+        if type(_json) == list:
+            return _json
         raise unifi_api_exception(_meta.get("msg",_json.get("errors",repr(_json))))
 
     def request(self,method,url=None,path=None,site=None,json=None,**kwargs):
         if not url:
-            if self.is_unifios:
+            if self.is_unifios == "UNVR":
+                url = f"{self.url}/proxy/protect/api"
+            elif self.is_unifios:
                 url = f"{self.url}/proxy/network/api"
             else:
                 url = f"{self.url}/api"
@@ -635,7 +659,6 @@ if __name__ == '__main__':
     parser.add_argument("host",type=str,
                         help="""Host name or IP address of Unifi Controller""")
     args = parser.parse_args()
-
     try:
         _api = unifi_controller_api(**args.__dict__)
     except socket.error as e:
@@ -643,11 +666,14 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if _api.is_unifios:
-
         labels = {"cmk/os_family": "UnifiOS"}
-        print("<<<labels:sep(0)>>>"
+        print("<<<labels:sep(0)>>>")
         print(json.dumps(labels))
-
+    if _api.is_unifios == "UNVR":
+        pprint(_api.get_data("/sensors",site=None))
+        pprint(_api.get_data("/cameras",site=None))
+        pprint(_api.get_data("/nvr",site=None))
+        sys.exit(0)
     ##pprint(_api.get_data("/stat/rogueap?within=4"))
     ##pprint(_api.get_data("/rest/user",site="default",method="GET"))
     ##pprint(_api.get_data("/stat/sta",site="default",method="GET"))
