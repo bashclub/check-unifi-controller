@@ -7,6 +7,7 @@ Download and install the checkmk agent:
 ~~~
 wget https://github.com/bashclub/check-unifi-controller/releases/download/v0.87/unifi_controller-0.87.mkp
 mkp add ./unifi_controller-0.87.mkp
+cmk enable unifi_controller
 ~~~
 
 ### Configure Agent
