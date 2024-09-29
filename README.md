@@ -6,7 +6,7 @@ Login into your checkmk instnace user on your checkmk server (e.g. via SSH).
 Download and install the checkmk agent:
 ~~~
 wget https://github.com/bashclub/check-unifi-controller/releases/download/v0.87/unifi_controller-0.87.mkp
-mkp install ./unifi_controller-0.87.mkp
+mkp add ./unifi_controller-0.87.mkp
 ~~~
 
 ### Configure Agent
