@@ -3,7 +3,7 @@
 #
 ##  MIT License
 ##  
-##  Copyright (c) 2024 Bash Club
+##  Copyright (c) 2021 Bash Club
 ##  
 ##  Permission is hereby granted, free of charge, to any person obtaining a copy
 ##  of this software and associated documentation files (the "Software"), to deal
@@ -120,7 +120,7 @@ def check_unifi_controller(item,section):
             state=State.OK,
             summary=f"Version: {section.cloudkey_version}"
         )
-        if _safe_int(section.cloudkey_update_available) > 0:
+        if int(section.cloudkey_update_available) > 0:
             yield Result(
                 state=State.WARN,
                 notice=_("Update available")
@@ -759,5 +759,7 @@ register.check_plugin(
     discovery_function=discovery_unifi_ssidlist,
     check_function=check_unifi_ssidlist,
 )
+
+
 
 

@@ -1,7 +1,8 @@
-title: Unifi Controller
+title: Unifi Devicelist
+catalog: networking/unifi
+distribution: unifi
 agents: unifi_controller
-catalog: networking
-licence: MIT
+license: MIT
 description:
  plz fill me
 

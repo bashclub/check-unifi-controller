@@ -1,7 +1,8 @@
 title: Unifi WLAN Radio
 agents: unifi_controller
-catalog: networking
-licence: MIT
+catalog: networking/unifi
+distribution: unifi
+license: MIT
 description:
  plz fill me
 
